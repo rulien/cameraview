@@ -30,6 +30,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -354,6 +355,9 @@ class Camera2 extends CameraViewImpl {
      */
     private boolean chooseCameraIdByFacing() {
         try {
+            if(blackListedPhoneModels()) {
+                return false;
+            }
             int internalFacing = INTERNAL_FACINGS.get(mFacing);
             final String[] ids = mCameraManager.getCameraIdList();
             if (ids.length == 0) { // No camera
@@ -403,6 +407,16 @@ class Camera2 extends CameraViewImpl {
         } catch (CameraAccessException e) {
             throw new RuntimeException("Failed to get a list of camera devices", e);
         }
+    }
+
+    /**
+     * Testing of these device proves a broken Camera 2 API even though FULL support
+     * is supposed to be in place. http://developer.samsung.com/forum/thread/camera-hal-broken-on-the-galaxy-s7/201/290174?boardName=SDK&startId=zzzzz~
+     * @return
+     */
+    private boolean blackListedPhoneModels() {
+        return Build.MANUFACTURER.equalsIgnoreCase("samsung") && (Build.MODEL.equalsIgnoreCase("SM-G930F") || Build.MODEL.equalsIgnoreCase(
+                "SM-G935F"));
     }
 
     /**
@@ -658,14 +672,16 @@ class Camera2 extends CameraViewImpl {
         mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
         try {
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
-            updateAutoFocus();
-            updateFlash();
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
-            mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback,
-                    null);
-            mCaptureCallback.setState(PictureCaptureCallback.STATE_PREVIEW);
+            if (mCaptureSession != null) {
+                mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
+                updateAutoFocus();
+                updateFlash();
+                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                        CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+                mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback,
+                        null);
+                mCaptureCallback.setState(PictureCaptureCallback.STATE_PREVIEW);
+            }
         } catch (CameraAccessException e) {
             Log.e(TAG, "Failed to restart camera preview.", e);
         }
