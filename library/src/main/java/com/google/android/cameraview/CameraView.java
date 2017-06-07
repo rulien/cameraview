@@ -47,7 +47,7 @@ public class CameraView extends FrameLayout {
     /** Direction the camera faces relative to device screen. */
     @IntDef({FACING_BACK, FACING_FRONT})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface Facing {
+    @interface Facing {
     }
 
     /** Flash will not be fired. */
@@ -67,7 +67,7 @@ public class CameraView extends FrameLayout {
 
     /** The mode for for the camera device's flash control */
     @IntDef({FLASH_OFF, FLASH_ON, FLASH_TORCH, FLASH_AUTO, FLASH_RED_EYE})
-    public @interface Flash {
+    @interface Flash {
     }
 
     CameraViewImpl mImpl;
@@ -420,7 +420,7 @@ public class CameraView extends FrameLayout {
             mCallbacks.add(callback);
         }
 
-        public void remove(Callback callback) {
+        void remove(Callback callback) {
             mCallbacks.remove(callback);
         }
 
@@ -449,12 +449,12 @@ public class CameraView extends FrameLayout {
             }
         }
 
-        public void reserveRequestLayoutOnOpen() {
+        void reserveRequestLayoutOnOpen() {
             mRequestLayoutOnOpen = true;
         }
     }
 
-    protected static class SavedState extends BaseSavedState {
+    private static class SavedState extends BaseSavedState {
 
         @Facing
         int facing;
@@ -467,7 +467,7 @@ public class CameraView extends FrameLayout {
         int flash;
 
         @SuppressWarnings("WrongConstant")
-        public SavedState(Parcel source, ClassLoader loader) {
+        SavedState(Parcel source, ClassLoader loader) {
             super(source);
             facing = source.readInt();
             ratio = source.readParcelable(loader);
@@ -475,7 +475,7 @@ public class CameraView extends FrameLayout {
             flash = source.readInt();
         }
 
-        public SavedState(Parcelable superState) {
+        SavedState(Parcelable superState) {
             super(superState);
         }
 
