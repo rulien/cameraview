@@ -43,6 +43,7 @@ public class CameraView extends FrameLayout {
 
     /** The camera device faces the same direction as the device's screen. */
     public static final int FACING_FRONT = Constants.FACING_FRONT;
+    private PreviewImpl mPreview;
 
     /** Direction the camera faces relative to device screen. */
     @IntDef({FACING_BACK, FACING_FRONT})
@@ -129,13 +130,12 @@ public class CameraView extends FrameLayout {
 
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
-        PreviewImpl preview;
         if (Build.VERSION.SDK_INT < 14) {
-            preview = new SurfaceViewPreview(context, this);
+            mPreview = new SurfaceViewPreview(context, this);
         } else {
-            preview = new TextureViewPreview(context, this);
+            mPreview = new TextureViewPreview(context, this);
         }
-        return preview;
+        return mPreview;
     }
 
     @Override
@@ -178,6 +178,7 @@ public class CameraView extends FrameLayout {
                 }
                 super.onMeasure(widthMeasureSpec,
                         MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+                changePreviewAccordingToMeasuredAspectRatio();
             } else if (widthMode != MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY) {
                 final AspectRatio ratio = getAspectRatio();
                 assert ratio != null;
@@ -187,13 +188,18 @@ public class CameraView extends FrameLayout {
                 }
                 super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                         heightMeasureSpec);
+                changePreviewAccordingToMeasuredAspectRatio();
             } else {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             }
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
-        // Measure the TextureView
+
+    }
+
+    // Measure the TextureView
+    private void changePreviewAccordingToMeasuredAspectRatio() {
         int width = getMeasuredWidth();
         int height = getMeasuredHeight();
         AspectRatio ratio = getAspectRatio();
@@ -247,7 +253,7 @@ public class CameraView extends FrameLayout {
             //store the state ,and restore this state after fall back o Camera1
             Parcelable state=onSaveInstanceState();
             // Camera2 uses legacy hardware layer; fall back to Camera1
-            mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
+            mImpl = new Camera1(mCallbacks, mPreview == null ? createPreviewImpl(getContext()) : mPreview);
             onRestoreInstanceState(state);
             mImpl.start();
         }
