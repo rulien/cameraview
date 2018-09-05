@@ -416,7 +416,7 @@ class Camera2 extends CameraViewImpl {
      */
     private boolean blackListedPhoneModels() {
         return Build.MANUFACTURER.equalsIgnoreCase("samsung") && (Build.MODEL.equalsIgnoreCase("SM-G930F") || Build.MODEL.equalsIgnoreCase(
-                "SM-G935F"));
+                "SM-G935F") || Build.MODEL.equalsIgnoreCase("SM-G925F") || Build.MODEL.equalsIgnoreCase("SM-G920F"));
     }
 
     /**
@@ -461,7 +461,14 @@ class Camera2 extends CameraViewImpl {
         if (mImageReader != null) {
             mImageReader.close();
         }
-        Size largest = mPictureSizes.sizes(mAspectRatio).last();
+        if (mPictureSizes.isEmpty()) {
+            collectCameraInfo();
+        }
+        SortedSet<Size> sizes = mPictureSizes.sizes(mAspectRatio);
+        if (sizes.isEmpty()) {
+            sizes = mPictureSizes.sizes(Constants.DEFAULT_ASPECT_RATIO);
+        }
+        Size largest = sizes.last();
         mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                 ImageFormat.JPEG, /* maxImages */ 2);
         mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, null);
@@ -597,8 +604,10 @@ class Camera2 extends CameraViewImpl {
         mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_START);
         try {
-            mCaptureCallback.setState(PictureCaptureCallback.STATE_LOCKING);
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
+            if (mCaptureSession != null) {
+                mCaptureCallback.setState(PictureCaptureCallback.STATE_LOCKING);
+                mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
+            }
         } catch (CameraAccessException e) {
             Log.e(TAG, "Failed to lock focus.", e);
         }
